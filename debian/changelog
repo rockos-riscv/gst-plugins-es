@@ -1,0 +1,5 @@
+gst-plugins-es (1.0) unstable; urgency=medium
+
+  * Init gst-plugins-es package for EIC770X.
+
+ -- Han Gao <rabenda.cn@gmail.com>  Sat, 02 Nov 2024 17:48:29 +0000

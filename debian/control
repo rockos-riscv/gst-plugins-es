@@ -1,0 +1,27 @@
+Source: gst-plugins-es
+Section: unknown
+Priority: optional
+Maintainer: Han Gao <rabenda.cn@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ meson,
+ gstreamer1.0-plugins-base (>= 1.24.0),
+ gstreamer1.0-tools,
+ libgstreamer-plugins-base1.0-dev (>= 1.24.0),
+ libgstreamer1.0-dev (>= 1.24.0),
+ es-video-common,
+ es-mpp,
+ es-hae,
+ es-sdk-audio-codec,
+Standards-Version: 4.6.2
+Homepage: https://github.com/rockos-riscv/gst-plugins-es
+Vcs-Browser: https://github.com/rockos-riscv/gst-plugins-es
+Vcs-Git: https://github.com/rockos-riscv/gst-plugins-es.git
+
+Package: gstreamer1.0-plugins-es
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: gstreamer1.0-plugins-es for ESWIN EIC770X cpu.
