@@ -1,0 +1,29 @@
+
+# Feature options for plugins without external deps
+
+# Feature options for plugins that need external deps
+option('esmppcodec',  type : 'feature', value : 'auto', description : 'codec based on esmpp')
+option('esaudioencoder',  type : 'feature', value : 'auto', description : 'es audio encoder.')
+option('esaudiodecoder',  type : 'feature', value : 'auto', description : 'es audio decoder.')
+
+# License-related feature options
+option('gpl', type: 'feature', value: 'auto', yield: true, # FIXME: disable by default
+  description: 'Allow build plugins that have GPL-licensed dependencies')
+
+# Common feature options
+option('tests', type : 'feature', value : 'disabled', yield : true)
+option('es_gtests', type : 'feature', value : 'enabled', yield : true)
+option('gobject-cast-checks', type : 'feature', value : 'auto', yield : true,
+       description: 'Enable run-time GObject cast checks (auto = enabled for development, disabled for stable releases)')
+option('glib-asserts', type : 'feature', value : 'enabled', yield : true,
+       description: 'Enable GLib assertion (auto = enabled for development, disabled for stable releases)')
+option('glib-checks', type : 'feature', value : 'enabled', yield : true,
+       description: 'Enable GLib checks such as API guards (auto = enabled for development, disabled for stable releases)')
+
+# Common options
+option('package-name', type : 'string', yield : true,
+       description : 'package name to use in plugins')
+option('package-origin', type : 'string', value : 'Unknown package origin', yield: true,
+       description : 'package origin URL to use in plugins')
+option('doc', type : 'feature', value : 'auto', yield: true,
+       description: 'Enable documentation.')
