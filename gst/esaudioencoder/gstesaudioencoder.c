@@ -72,6 +72,7 @@
 #define DEFAULT_AMR_WB_SAMPLES    320
 
 #define DEBUG_DUMP_FILE 1
+#define DUMP_ORIGINAL_DATA_FILE_NAME "/tmp/audio/before_encoder_dump.pcm"
 #define DUMP_ENCODER_FILE_NAME "/tmp/audio/encoder_dump.aac"
 
 #define SRC_CAPS \
@@ -427,12 +428,18 @@ gst_esaudioencoder_open_encoder (GstEsaudioencoder * esaudioencoder, GstAudioInf
           } else{
             aac_attr.aot = AOT_LC;
           }
-          aac_attr.channels = info->channels;
-          /* sample rate*/
-          if(esaudioencoder->sample_rate == 0) {
-            aac_attr.sample_rate = DEFAULT_AAC_SAMPLE_RATE;
+          if (info->channels != 0) {
+            aac_attr.channels = info->channels;
           } else {
+            aac_attr.channels = DEFAULT_AAC_CHANNELS;
+          }
+          /* sample rate*/
+          if (info->rate != 0) {
+            aac_attr.sample_rate = info->rate;
+          } else if(esaudioencoder->sample_rate != 0) {
             aac_attr.sample_rate = esaudioencoder->sample_rate;
+          } else {
+            aac_attr.sample_rate = DEFAULT_AAC_SAMPLE_RATE;
           }
           esaudioencoder->samples = DEFAULT_AAC_SAMPLES;
           attr = &aac_attr;
@@ -607,6 +614,9 @@ gst_esaudioencoder_handle_frame (GstAudioEncoder * enc, GstBuffer * in_buf)
   gst_buffer_map (out_buf, &omap, GST_MAP_WRITE);
 
   enc_ret = es_aenc_encode_frame(esaudioencoder->chn, data, size, omap.data, &out_size);
+  if (DEBUG_DUMP_FILE) {
+    gst_esaudioencoder_dump_data(DUMP_ORIGINAL_DATA_FILE_NAME, data, size);
+  }
 
   /* unmap in_buf at once */
   gst_buffer_unmap (in_buf, &map);

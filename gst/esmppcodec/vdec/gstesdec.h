@@ -62,6 +62,8 @@ struct _GstEsDec {
     guint crop_w;              /* config crop w */
     guint crop_h;              /* config crop h */
     guint stride_align;        /* config output stride align */
+    gboolean buf_cache;        /* config the buffer cache mode */
+    gboolean memset_output;    /* config if memset padding buffer */
 
     gboolean is_flushing;
     gboolean is_draining;

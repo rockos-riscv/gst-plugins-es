@@ -10,7 +10,9 @@ esmppcodec_sources = [
   './venc/gstesjpegenc.c',
   './venc/gstesvenc_comm.c',
   './vdec/gstesdec.c',
-  './vdec/gstesvideodec.c'
+  './vdec/gstesvideodec.c',
+  './vdec/gstesjpegdec.c',
+  './vdec/gstesdec_comm.c'
 ]
 
 vencinc = include_directories('venc')

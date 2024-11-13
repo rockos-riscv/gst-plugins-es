@@ -268,11 +268,11 @@ void gst_es_venc_cfg_set_venc_rc(MppEncCfgPtr cfg, GstEsVencParam *param, MppCod
                 CFG_SET_U32(cfg, "cbr:cpb_size", (unsigned int)param->cpb_size);
                 CFG_SET_U32(cfg, "rc:stat_time", param->stat_time);
 
-                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:qp_init", param->qp_init, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:qp_max", param->qp_max, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:qp_min", param->qp_min, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:qp_max_i", param->qp_max_i, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:qp_min_i", param->qp_min_i, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:iprop", param->qp_init, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:max_qp", param->qp_max, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:min_qp", param->qp_min, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:max_iqp", param->qp_max_i, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:min_iqp", param->qp_min_i, -1);
 
                 break;
             }
@@ -282,11 +282,11 @@ void gst_es_venc_cfg_set_venc_rc(MppEncCfgPtr cfg, GstEsVencParam *param, MppCod
                 CFG_SET_U32(cfg, "vbr:max_bitrate", bitrate);
                 CFG_SET_U32(cfg, "rc:stat_time", param->stat_time);
 
-                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:qp_init", param->qp_init, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:qp_max", param->qp_max, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:qp_min", param->qp_min, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:qp_max_i", param->qp_max_i, -1);
-                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:qp_min_i", param->qp_min_i, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:iprop", param->qp_init, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:max_qp", param->qp_max, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:min_qp", param->qp_min, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:max_iqp", param->qp_max_i, -1);
+                CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:min_iqp", param->qp_min_i, -1);
                 break;
             }
             case VENC_RC_MODE_H264FIXQP:

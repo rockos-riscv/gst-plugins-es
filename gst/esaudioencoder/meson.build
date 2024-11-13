@@ -1,4 +1,4 @@
-esaudioencoder_dep = cc.find_library('es_codec', required : get_option('esaudioencoder'))
+esaudioencoder_dep = cc.find_library('es_acodec', required : get_option('esaudioencoder'))
 
 gstpbutils_dep = dependency('gstreamer-pbutils-1.0', version : gst_req,
     fallback : ['gst-plugins-base', 'pbutils_dep'])

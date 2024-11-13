@@ -61,104 +61,94 @@ typedef enum {
     PROP_0,
     PROP_OUT_WIDTH,
     PROP_OUT_HEIGHT,
-    PROP_OUT_FORMAT,
     PROP_CROP_X,
     PROP_CROP_Y,
     PROP_CROP_W,
     PROP_CROP_H,
     PROP_STRIDE_ALIGN,
     PROP_EXTRA_HW_FRM,
+    PROP_BUF_CACHE,
+    PROP_TEST_MEMSET_OUTPUT,
 } ES_DEC_PROP_E;
-
-/* Don't change the order, it decided by "PROP_OUT_FORMAT" property */
-static const GstVideoFormat support_fmt[] = {
-    GST_VIDEO_FORMAT_NV12,
-    GST_VIDEO_FORMAT_NV21,
-    GST_VIDEO_FORMAT_I420,
-    GST_VIDEO_FORMAT_GRAY8,
-    GST_VIDEO_FORMAT_P010_10LE,
-    GST_VIDEO_FORMAT_BGR,
-    GST_VIDEO_FORMAT_RGB,
-    GST_VIDEO_FORMAT_BGRA,
-    GST_VIDEO_FORMAT_RGBA,
-    GST_VIDEO_FORMAT_BGRx,
-    GST_VIDEO_FORMAT_RGBx,
-};
-static gint support_fmt_cnt = sizeof(support_fmt) / sizeof(support_fmt[0]);
-
-static GstVideoFormat convert_value_to_gst_format(gint value) {
-    if (value < 0 || value >= support_fmt_cnt) {
-        return GST_VIDEO_FORMAT_NV12;
-    }
-    return support_fmt[value];
-}
 
 static void gst_es_dec_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec) {
     GstVideoDecoder *decoder = GST_VIDEO_DECODER(object);
     GstEsDec *self = GST_ES_DEC(decoder);
+    if (!self->input_state) {
+        GST_WARNING_OBJECT(decoder, "unable to set property.");
+    }
+    gint val = g_value_get_int(value);
 
     switch (prop_id) {
         case PROP_OUT_WIDTH: {
-            if (self->input_state)
-                GST_WARNING_OBJECT(decoder, "unable to change scale width");
+            if (val == -2 || val == -4 || val == -8 || val >= 0)
+                self->out_width = val;
             else
-                self->out_width = g_value_get_int(value);
+                GST_WARNING_OBJECT(decoder, "unable to change scale width");
             break;
         }
         case PROP_OUT_HEIGHT: {
-            if (self->input_state)
-                GST_WARNING_OBJECT(decoder, "unable to change scale height");
+            if (val == -2 || val == -4 || val == -8 || val >= 0)
+                self->out_height = val;
             else
-                self->out_height = g_value_get_int(value);
+                GST_WARNING_OBJECT(decoder, "unable to change scale height");
             break;
         }
         case PROP_CROP_X: {
-            if (self->input_state)
+            if (val < 0)
                 GST_WARNING_OBJECT(decoder, "unable to change crop x");
             else
-                self->crop_x = g_value_get_int(value);
+                self->crop_x = val;
             break;
         }
         case PROP_CROP_Y: {
-            if (self->input_state)
+            if (val < 0)
                 GST_WARNING_OBJECT(decoder, "unable to change crop y");
             else
-                self->crop_y = g_value_get_int(value);
+                self->crop_y = val;
             break;
         }
         case PROP_CROP_W: {
-            if (self->input_state)
+            if (val < 0)
                 GST_WARNING_OBJECT(decoder, "unable to change crop w");
             else
-                self->crop_w = g_value_get_int(value);
+                self->crop_w = val;
             break;
         }
         case PROP_CROP_H: {
-            if (self->input_state)
+            if (val < 0)
                 GST_WARNING_OBJECT(decoder, "unable to change crop h");
             else
-                self->crop_h = g_value_get_int(value);
+                self->crop_h = val;
             break;
         }
         case PROP_STRIDE_ALIGN: {
-            if (self->input_state)
-                GST_WARNING_OBJECT(decoder, "unable to change stride align");
+            if (val == 1 || val == 8 || val == 16 || val == 32 || val == 64 || val == 128 || val == 256 || val == 512
+                || val == 1024 || val == 2048)
+                self->stride_align = val;
             else
-                self->stride_align = g_value_get_int(value);
+                GST_WARNING_OBJECT(decoder, "unable to change stride align");
             break;
         }
         case PROP_EXTRA_HW_FRM: {
-            if (self->input_state)
+            if (val < 0)
                 GST_WARNING_OBJECT(decoder, "unable to change extra hw frame");
             else
-                self->extra_hw_frames = g_value_get_int(value);
+                self->extra_hw_frames = val;
             break;
         }
-        case PROP_OUT_FORMAT: {
-            if (self->input_state)
-                GST_WARNING_OBJECT(decoder, "unable to change output format");
+        case PROP_BUF_CACHE: {
+            if (val == 0 || val == 1)
+                self->buf_cache = (gboolean)val;
             else
-                self->out_format = convert_value_to_gst_format(g_value_get_int(value));
+                GST_WARNING_OBJECT(decoder, "unable to change buffer cache mode");
+            break;
+        }
+        case PROP_TEST_MEMSET_OUTPUT: {
+            if (val == 0 || val == 1)
+                self->memset_output = (gboolean)val;
+            else
+                GST_WARNING_OBJECT(decoder, "invalid value of memset output");
             break;
         }
         default:
@@ -196,17 +186,12 @@ static void gst_es_dec_get_property(GObject *object, guint prop_id, GValue *valu
         case PROP_EXTRA_HW_FRM:
             g_value_set_int(value, self->extra_hw_frames);
             break;
-        case PROP_OUT_FORMAT: {
-            gint val = 0;
-            for (gint i = 0; i < support_fmt_cnt; i++) {
-                if (support_fmt[i] == self->out_format) {
-                    val = i;
-                    break;
-                }
-            }
-            g_value_set_int(value, val);
+        case PROP_BUF_CACHE:
+            g_value_set_int(value, self->buf_cache);
             break;
-        }
+        case PROP_TEST_MEMSET_OUTPUT:
+            g_value_set_int(value, self->memset_output);
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
             return;
@@ -265,7 +250,7 @@ static gboolean gst_es_dec_start(GstVideoDecoder *decoder) {
 
     GST_DEBUG_OBJECT(self, "starting");
 
-    self->allocator = gst_es_allocator_new();
+    self->allocator = gst_es_allocator_new(self->buf_cache);
     if (!self->allocator) {
         GST_ERROR_OBJECT(self, "gst_es_allocator_new() failed.");
         return FALSE;
@@ -363,7 +348,8 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
         self->input_state = NULL;
     } else {
         MppFrameFormat mpp_fmt;
-        if (self->mpp_coding_type != MPP_VIDEO_CodingAVC && self->mpp_coding_type != MPP_VIDEO_CodingHEVC) {
+        if (self->mpp_coding_type != MPP_VIDEO_CodingAVC && self->mpp_coding_type != MPP_VIDEO_CodingHEVC
+            && self->mpp_coding_type != MPP_VIDEO_CodingMJPEG) {
             GST_ERROR_OBJECT(self, "unsupported coding type %d.", self->mpp_coding_type);
             return FALSE;
         }
@@ -407,6 +393,10 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "extra_hw_frames", self->extra_hw_frames);
         }
         if (self->out_width && self->out_height) {
+            if ((self->out_width * self->out_height) < 0) {
+                GST_ERROR_OBJECT(self, "width %d height %d not support", self->out_width, self->out_height);
+                goto error3;
+            }
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "scale_width", self->out_width);
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "scale_height", self->out_height);
         }
@@ -472,9 +462,6 @@ static gboolean update_video_info(GstVideoDecoder *decoder,
 static GstFlowReturn apply_info_change(GstVideoDecoder *decoder, MppFramePtr mpp_frame) {
     GstEsDec *self = GST_ES_DEC(decoder);
     GstVideoInfo *gst_info = &self->gst_info;
-    GstVideoFormat gst_dst_format;
-    gint dst_width;
-    gint dst_height;
 
     gint width = mpp_frame_get_width(mpp_frame);
     gint height = mpp_frame_get_height(mpp_frame);
@@ -483,26 +470,9 @@ static GstFlowReturn apply_info_change(GstVideoDecoder *decoder, MppFramePtr mpp
 
     if (hstride % 2 || vstride % 2) return GST_FLOW_NOT_NEGOTIATED;
 
-    gst_video_info_set_format(gst_info,
-                              self->out_format,
-                              self->out_width ? self->out_width : width,
-                              self->out_height ? self->out_height : height);
+    gst_video_info_set_format(gst_info, self->out_format, width, height);
 
-    gst_dst_format = GST_VIDEO_INFO_FORMAT(gst_info);
-    dst_width = GST_VIDEO_INFO_WIDTH(gst_info);
-    dst_height = GST_VIDEO_INFO_HEIGHT(gst_info);
-    if (dst_width != width || dst_height != height) {
-        GST_INFO_OBJECT(self,
-                        "%s %dx%d scale to %dx%d",
-                        gst_video_format_to_string(gst_dst_format),
-                        width,
-                        height,
-                        dst_width,
-                        dst_height);
-        hstride = 0;
-        vstride = 0;
-    }
-    if (!update_video_info(decoder, gst_dst_format, dst_width, dst_height, hstride, vstride, self->stride_align))
+    if (!update_video_info(decoder, self->out_format, width, height, hstride, vstride, self->stride_align))
         return GST_FLOW_NOT_NEGOTIATED;
 
     return GST_FLOW_OK;
@@ -605,6 +575,43 @@ static GstBuffer *get_gst_buffer(GstVideoDecoder *decoder, MppFramePtr mpp_frame
     return gst_buffer;
 }
 
+static void memset_padding_width(GstEsDec *self, MppFramePtr mpp_frame) {
+    gint width = mpp_frame_get_width(mpp_frame);
+    gint height = mpp_frame_get_height(mpp_frame);
+    gint align_width = ((width + self->stride_align - 1) / self->stride_align) * self->stride_align;
+
+    if (align_width != width) {
+        void *addr = mpp_buffer_get_ptr(mpp_frame_get_buffer(mpp_frame));
+        if (addr == NULL) {
+            GST_ERROR_OBJECT(self, "Failed to get buffer pointer");
+            return;
+        }
+
+        gint align_width_size, width_size, padding_width_size;
+        GstVideoInfo info;
+
+        gst_video_info_init(&info);
+        gst_video_info_set_format(&info, self->out_format, align_width, 1);
+
+        if (GST_VIDEO_INFO_N_PLANES(&info) > 1) {
+            GST_WARNING_OBJECT(self, "Not support padding buffer memset");
+            return;
+        }
+        align_width_size = GST_VIDEO_INFO_SIZE(&info);
+
+        gst_video_info_set_format(&info, self->out_format, width, 1);
+        width_size = GST_VIDEO_INFO_SIZE(&info);
+
+        padding_width_size = align_width_size - width_size;
+
+        for (gint i = 0; i < height; i++) {
+            memset((char *)addr + width_size, 0, padding_width_size);
+            addr = (char *)addr + align_width_size;
+        }
+    }
+    return;
+}
+
 static void gst_es_dec_loop(GstVideoDecoder *decoder) {
     GstEsDecClass *klass = GST_ES_DEC_GET_CLASS(decoder);
     GstEsDec *self = GST_ES_DEC(decoder);
@@ -670,6 +677,14 @@ static void gst_es_dec_loop(GstVideoDecoder *decoder) {
         goto error;
     }
 
+    if (self->buf_cache) {
+        mpp_buffer_sync_begin(mpp_frame_get_buffer(mpp_frame));
+    }
+
+    if (self->memset_output) {
+        memset_padding_width(self, mpp_frame);
+    }
+
     gst_buffer_resize(gst_buffer, 0, GST_VIDEO_INFO_SIZE(&self->gst_info));
     GST_MINI_OBJECT_FLAG_SET(gst_buffer, GST_MINI_OBJECT_FLAG_LOCKABLE);
     gst_frame->output_buffer = gst_buffer;
@@ -694,7 +709,7 @@ out:
     GST_VIDEO_DECODER_STREAM_UNLOCK(decoder);
     return;
 eos_frame:
-    GST_INFO_OBJECT(self, "got frame with eos");
+    GST_DEBUG_OBJECT(self, "got frame with eos");
     self->return_code = GST_FLOW_EOS;
     goto out;
 info_change_frame:
@@ -929,31 +944,22 @@ static void gst_es_dec_class_init(GstEsDecClass *klass) {
                                                      2048,
                                                      1,
                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-    g_object_class_install_property(
-        gobject_class,
-        PROP_OUT_FORMAT,
-        g_param_spec_int("format",
-                         "Set the output format",
-                         "0:NV12 1:NV21 2:I420 3:GRAY8 4:P010LE 5:BGR 6:RGB 7:BGRA 8:RGBA 9:BGRx 10:RGBx",
-                         0,
-                         G_MAXINT,
-                         0,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
     g_object_class_install_property(gobject_class,
                                     PROP_OUT_WIDTH,
                                     g_param_spec_int("sw",
-                                                     "Scale width",
-                                                     "Pixels of video scale width",
-                                                     0,
+                                                     "Downscale width",
+                                                     "Pixels of video downscale width",
+                                                     -8,
                                                      G_MAXINT,
                                                      0,
                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
     g_object_class_install_property(gobject_class,
                                     PROP_OUT_HEIGHT,
                                     g_param_spec_int("sh",
-                                                     "Scale height",
-                                                     "Pixels of video scale height",
-                                                     0,
+                                                     "Downscale height",
+                                                     "Pixels of video downscale height",
+                                                     -8,
                                                      G_MAXINT,
                                                      0,
                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -964,6 +970,24 @@ static void gst_es_dec_class_init(GstEsDecClass *klass) {
                                                      "Set the extra hardware frames count",
                                                      0,
                                                      G_MAXINT,
+                                                     0,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    g_object_class_install_property(gobject_class,
+                                    PROP_BUF_CACHE,
+                                    g_param_spec_int("buf-cache",
+                                                     "buffer cache mode",
+                                                     "Set the cache mode of output buffer, 0-Noncache, 1-Cache",
+                                                     0,
+                                                     1,
+                                                     0,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+    g_object_class_install_property(gobject_class,
+                                    PROP_TEST_MEMSET_OUTPUT,
+                                    g_param_spec_int("test-memset-output",
+                                                     "memset output buffer",
+                                                     "Memset output buffer for test, 0-noset, 1-set",
+                                                     0,
+                                                     1,
                                                      0,
                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 

@@ -194,15 +194,19 @@ static gpointer gst_es_allocator_mem_map_full(GstMemory *gst_mem, GstMapInfo *gs
     return gst_mem->allocator->mem_map(gst_mem, size, gst_map_info->flags);
 }
 
-GstAllocator *gst_es_allocator_new(void) {
+GstAllocator *gst_es_allocator_new(gboolean cache) {
     GstEsAllocator *alloc;
     MppBufferGroupPtr group, ext_group;
 
+    gint type = MPP_BUFFER_TYPE_DMA_HEAP;
+    if (cache) {
+        type |= MPP_BUFFER_FLAGS_CACHABLE;
+    }
     static gint num_mpp_alloc = 0;
-    if (mpp_buffer_group_get_internal(&group, MPP_BUFFER_TYPE_DMA_HEAP)) {
+    if (mpp_buffer_group_get_internal(&group, type)) {
         return FALSE;
     }
-    if (mpp_buffer_group_get_external(&ext_group, MPP_BUFFER_TYPE_DMA_HEAP)) {
+    if (mpp_buffer_group_get_external(&ext_group, type)) {
         mpp_buffer_group_put(group);
         return FALSE;
     }

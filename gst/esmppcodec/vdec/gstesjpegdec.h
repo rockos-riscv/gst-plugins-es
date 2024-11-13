@@ -1,6 +1,6 @@
 /*
  * Copyright (C) <2024> Beijing ESWIN Computing Technology Co., Ltd.
- *     Author: Tangdaoyong <tangdaoyong@eswincomputing.com>
+ *     Author: Liujie <liujie@eswincomputing.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -18,18 +18,18 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __GST_ES_ALLOCATOR_H__
-#define __GST_ES_ALLOCATOR_H__
+#ifndef __GST_ES_JPEG_DEC_H__
+#define __GST_ES_JPEG_DEC_H__
 
-#include <gst/video/video.h>
-#include "mpp_type.h"
+#include "gstesdec.h"
 
-gint gst_es_allocator_get_index(GstAllocator *allocator);
-MppBufferGroupPtr gst_es_allocator_get_mpp_group(GstAllocator *allocator);
-GstMemory *gst_es_allocator_import_mppbuf(GstAllocator *allocator, MppBufferPtr mpp_buf);
-GstMemory *gst_es_allocator_import_gst_memory(GstAllocator *allocator, GstMemory *gst_mem);
-GstAllocator *gst_es_allocator_new(gboolean cache);
+G_BEGIN_DECLS;
 
-MppBufferPtr get_mpp_buffer_from_gst_mem(GstMemory *gst_mem);
+#define GST_TYPE_ES_JPEG_DEC (gst_es_jpeg_dec_get_type())
+G_DECLARE_FINAL_TYPE(GstEsJpegDec, gst_es_jpeg_dec, GST, ES_JPEG_DEC, GstEsDec);
+
+gboolean gst_es_jpeg_dec_register(GstPlugin* plugin, guint rank);
+
+G_END_DECLS;
 
 #endif

@@ -114,7 +114,7 @@ static gboolean gst_es_venc_start(GstVideoEncoder *encoder) {
     GstEsVenc *self = GST_ES_VENC(encoder);
     GST_DEBUG_OBJECT(self, "starting es encoder, type=%d", self->mpp_type);
 
-    self->allocator = gst_es_allocator_new();
+    self->allocator = gst_es_allocator_new(FALSE);
     if (!self->allocator) {
         GST_ERROR_OBJECT(self, "create allocator failed");
         return FALSE;
@@ -842,12 +842,16 @@ static GType gst_es_venc_color_primaries_get_type(void) {
 
 gboolean gst_es_venc_video_info_align(GstVideoInfo *info) {
     gint vstride = 0;
+    gint hstride = 0;
 
     /* Allow vstride aligning */
     if (!g_getenv("GST_ES_VENC_ALIGNED_VSTRIDE")) {
         vstride = GST_ES_VIDEO_INFO_VSTRIDE(info);
     }
-    return gst_es_video_info_align(info, 0, vstride);
+    if (!g_getenv("GST_ES_VENC_ALIGNED_HSTRIDE")) {
+        hstride = GST_ES_VIDEO_INFO_HSTRIDE(info);
+    }
+    return gst_es_video_info_align(info, hstride, vstride);
 }
 
 static gboolean gst_es_venc_propose_allocation(GstVideoEncoder *encoder, GstQuery *query) {
@@ -1005,7 +1009,7 @@ static GstBuffer *gst_es_venc_convert(GstVideoEncoder *encoder, GstVideoCodecFra
                                    dst_info->stride);
 
     if (!gst_es_venc_video_info_matched(&src_info, dst_info)) {
-        GST_ERROR_OBJECT(self, "output not matched\n");
+        GST_WARNING_OBJECT(self, "output not matched\n");
         goto convert;
     }
 
@@ -1299,6 +1303,8 @@ static GstFlowReturn gst_es_venc_handle_frame(GstVideoEncoder *encoder, GstVideo
     gboolean keyframe;
     GstFlowReturn ret = GST_FLOW_OK;
     gint dump_input = 0;
+    GstVideoInfo *src_info = &self->input_state->info;
+    guint stride[4] = {0}, offsets[4] = {0};
 
     GST_DEBUG_OBJECT(self, "handling frame[%d]", frame->system_frame_number);
     GST_ES_VENC_LOCK(encoder);
@@ -1330,13 +1336,24 @@ static GstFlowReturn gst_es_venc_handle_frame(GstVideoEncoder *encoder, GstVideo
     if (G_UNLIKELY(!buffer)) {
         goto not_negotiated;
     }
-
     input_gst_mem = gst_buffer_peek_memory(buffer, 0);
     in_mpp_buf = get_mpp_buffer_from_gst_mem(input_gst_mem);
     if (!in_mpp_buf) {
         GST_ERROR_OBJECT(self, "get_mpp_buffer_from_gst_mem failed\n");
         goto drop;
     }
+    for (gint i = 0; i < GST_VIDEO_INFO_N_PLANES(src_info); i++) {
+        stride[i] = GST_VIDEO_INFO_PLANE_STRIDE(src_info, i);
+        offsets[i] = GST_VIDEO_INFO_PLANE_OFFSET(src_info, i);
+    }
+    GST_DEBUG_OBJECT(self,"frame planes:%d, stride:%d,%d,%d, offset:%d,%d,%d\n",
+           GST_VIDEO_INFO_N_PLANES(src_info),
+           stride[0],
+           stride[1],
+           stride[2],
+           offsets[0],
+           offsets[1],
+           offsets[2]);
 
     mpp_frame_init(&mpp_frame);
     mpp_frame_set_buffer(mpp_frame, in_mpp_buf);
@@ -1347,6 +1364,8 @@ static GstFlowReturn gst_es_venc_handle_frame(GstVideoEncoder *encoder, GstVideo
     mpp_frame_set_pts(mpp_frame, frame->pts);
     mpp_frame_set_hor_stride(mpp_frame, GST_ES_VIDEO_INFO_HSTRIDE(info));
     mpp_frame_set_ver_stride(mpp_frame, GST_ES_VIDEO_INFO_VSTRIDE(info));
+    mpp_frame_set_stride(mpp_frame, stride);
+    mpp_frame_set_offset(mpp_frame, offsets);
 
     MppMetaPtr meta = mpp_frame_get_meta(mpp_frame);
     if (meta) {

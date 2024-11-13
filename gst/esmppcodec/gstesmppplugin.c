@@ -28,12 +28,12 @@
 #include "gstesh265enc.h"
 #include "gstesvideodec.h"
 #include "gstesjpegenc.h"
+#include "gstesjpegdec.h"
 
 GST_DEBUG_CATEGORY_STATIC(esmpp_debug);
 #define GST_CAT_DEFAULT esmpp_debug
 
-#define ENTRY_GST_FMT_INFO(gst_fmt, mpp_fmt, stride) \
-    { GST_VIDEO_FORMAT_##gst_fmt, MPP_FMT_##mpp_fmt, stride }
+#define ENTRY_GST_FMT_INFO(gst_fmt, mpp_fmt, stride) {GST_VIDEO_FORMAT_##gst_fmt, MPP_FMT_##mpp_fmt, stride}
 
 static struct gst_format_info {
     GstVideoFormat gst_fmt;
@@ -170,6 +170,7 @@ static gboolean plugin_init(GstPlugin* plugin) {
     gst_es_h265_enc_register(plugin, GST_RANK_PRIMARY + 1);
     gst_es_video_dec_register(plugin, GST_RANK_PRIMARY + 1);
     gst_es_jpeg_enc_register(plugin, GST_RANK_PRIMARY + 1);
+    gst_es_jpeg_dec_register(plugin, GST_RANK_PRIMARY + 1);
     return TRUE;
 }
 
