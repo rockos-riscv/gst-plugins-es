@@ -1,4 +1,4 @@
-esaudiodecoder_dep = cc.find_library('es_codec', required : get_option('esaudiodecoder'))
+esaudiodecoder_dep = cc.find_library('es_acodec', required : get_option('esaudiodecoder'))
 esaudiodecoder_sources = [
   'gstesaudiodecoder.c'
 ]
