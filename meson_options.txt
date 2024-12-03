@@ -5,6 +5,7 @@
 option('esmppcodec',  type : 'feature', value : 'auto', description : 'codec based on esmpp')
 option('esaudioencoder',  type : 'feature', value : 'auto', description : 'es audio encoder.')
 option('esaudiodecoder',  type : 'feature', value : 'auto', description : 'es audio decoder.')
+option('esavsync',  type : 'feature', value : 'auto', description : 'es av sync.')
 
 # License-related feature options
 option('gpl', type: 'feature', value: 'auto', yield: true, # FIXME: disable by default
