@@ -1,6 +1,7 @@
 foreach plugin : ['esmppcodec',
                   'esaudioencoder',
-                  'esaudiodecoder'
+                  'esaudiodecoder',
+                  'esavsync'
                    ]
   if not get_option(plugin).disabled()
     subdir(plugin)

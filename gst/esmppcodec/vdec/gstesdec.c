@@ -353,7 +353,7 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
             GST_ERROR_OBJECT(self, "unsupported coding type %d.", self->mpp_coding_type);
             return FALSE;
         }
-        if (esmpp_create(&self->mpp_ctx, MPP_CTX_DEC, self->mpp_coding_type) != MPP_OK) {
+        if (esmpp_create(&self->mpp_ctx, MPP_CTX_DEC, self->mpp_coding_type, 0) != MPP_OK) {
             GST_ERROR_OBJECT(self, "failed to create mpp context.");
             return FALSE;
         }

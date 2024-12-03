@@ -102,7 +102,7 @@ enum {
 gboolean gst_es_venc_supported(MppCodingType coding) {
     MppCtxPtr ctx = NULL;
 
-    if (esmpp_create(&ctx, MPP_CTX_ENC, coding)) {
+    if (esmpp_create(&ctx, MPP_CTX_ENC, coding, 0)) {
         return FALSE;
     }
 
@@ -120,7 +120,7 @@ static gboolean gst_es_venc_start(GstVideoEncoder *encoder) {
         return FALSE;
     }
 
-    if (MPP_OK != esmpp_create(&self->ctx, MPP_CTX_ENC, self->mpp_type)) {
+    if (MPP_OK != esmpp_create(&self->ctx, MPP_CTX_ENC, self->mpp_type, 0)) {
         GST_ERROR_OBJECT(self, "create esmpp failed, type=%d", self->mpp_type);
         goto err_unref_alloc;
     }
@@ -1346,14 +1346,15 @@ static GstFlowReturn gst_es_venc_handle_frame(GstVideoEncoder *encoder, GstVideo
         stride[i] = GST_VIDEO_INFO_PLANE_STRIDE(src_info, i);
         offsets[i] = GST_VIDEO_INFO_PLANE_OFFSET(src_info, i);
     }
-    GST_DEBUG_OBJECT(self,"frame planes:%d, stride:%d,%d,%d, offset:%d,%d,%d\n",
-           GST_VIDEO_INFO_N_PLANES(src_info),
-           stride[0],
-           stride[1],
-           stride[2],
-           offsets[0],
-           offsets[1],
-           offsets[2]);
+    GST_DEBUG_OBJECT(self,
+                     "frame planes:%d, stride:%d,%d,%d, offset:%d,%d,%d\n",
+                     GST_VIDEO_INFO_N_PLANES(src_info),
+                     stride[0],
+                     stride[1],
+                     stride[2],
+                     offsets[0],
+                     offsets[1],
+                     offsets[2]);
 
     mpp_frame_init(&mpp_frame);
     mpp_frame_set_buffer(mpp_frame, in_mpp_buf);
