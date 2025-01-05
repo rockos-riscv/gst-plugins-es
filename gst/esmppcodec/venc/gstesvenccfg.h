@@ -77,6 +77,7 @@ typedef struct {
     MPP_ENC_RC_MODE rc_mode;
     gint gop;
     gint stat_time;     // [1, 60]; the rate statistic time,  unit is sec
+    gint start_qp;
     guint bitrate;      // kbps
     guint max_bitrate;  // VBR
     gint cpb_size;
