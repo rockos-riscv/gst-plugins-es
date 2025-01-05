@@ -267,6 +267,7 @@ void gst_es_venc_cfg_set_venc_rc(MppEncCfgPtr cfg, GstEsVencParam *param, MppCod
                 }
                 CFG_SET_U32(cfg, "cbr:cpb_size", (unsigned int)param->cpb_size);
                 CFG_SET_U32(cfg, "rc:stat_time", param->stat_time);
+                CFG_SET_S32(cfg, "rc_adv:first_frame_start_qp", param->start_qp);
 
                 CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:iprop", param->qp_init, -1);
                 CFG_SET_S32_IF_USER_SET(cfg, "cbr_adv:max_qp", param->qp_max, -1);
@@ -281,6 +282,7 @@ void gst_es_venc_cfg_set_venc_rc(MppEncCfgPtr cfg, GstEsVencParam *param, MppCod
                 bitrate = (unsigned int)(param->max_bitrate);
                 CFG_SET_U32(cfg, "vbr:max_bitrate", bitrate);
                 CFG_SET_U32(cfg, "rc:stat_time", param->stat_time);
+                CFG_SET_S32(cfg, "rc_adv:first_frame_start_qp", param->start_qp);
 
                 CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:iprop", param->qp_init, -1);
                 CFG_SET_S32_IF_USER_SET(cfg, "vbr_adv:max_qp", param->qp_max, -1);
@@ -297,7 +299,7 @@ void gst_es_venc_cfg_set_venc_rc(MppEncCfgPtr cfg, GstEsVencParam *param, MppCod
                 break;
             }
             case VENC_RC_MODE_MJPEGCBR: {
-                bitrate = (unsigned int)(param->bitrate * 10);
+                bitrate = (unsigned int)(param->bitrate);
                 CFG_SET_U32(cfg, "cbr:bitrate", bitrate);
                 CFG_SET_U32(cfg, "rc:stat_time", param->stat_time);
                 CFG_SET_U32_IF_USER_SET(cfg, "cbr_adv:max_qfactor", param->qfactor_max, -1);
@@ -433,6 +435,7 @@ void gst_es_venc_cfg_set_default(GstEsVencParam *param) {
     param->rc_mode = DEFAULT_PROP_RC_MODE;
     param->gop = DEFAULT_PROP_GOP;
     param->stat_time = 1;
+    param->start_qp = -1;
     param->bitrate = DEFAULT_BITRATE;
     param->max_bitrate = DEFAULT_MAX_BITRATE;
     param->cpb_size = -1;
