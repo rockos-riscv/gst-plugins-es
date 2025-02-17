@@ -84,6 +84,7 @@ enum {
     RC_QP_MIN,
     RC_QP_MAXI,
     RC_QP_MINI,
+    RC_START_QP,
     GOP_MODE,
     GOP_IP_QP_DELTA,
     GOP_BG_QP_DELTA,
@@ -533,6 +534,10 @@ void gst_es_venc_set_property(GObject *object, guint prop_id, const GValue *valu
             gint qp_mini = g_value_get_int(value);
             VENC_SET_PROPERTY(qp_mini, params->qp_min_i);
         } break;
+        case RC_START_QP: {
+            gint start_qp = g_value_get_int(value);
+            VENC_SET_PROPERTY(start_qp, params->start_qp);
+        } break;
         case GOP_MODE: {
             MPP_ENC_GOP_MODE gop_mode = g_value_get_enum(value);
             VENC_SET_PROPERTY(gop_mode, params->gop_mode);
@@ -652,6 +657,9 @@ void gst_es_venc_get_property(GObject *object, guint prop_id, GValue *value, GPa
             break;
         case RC_QP_MINI:
             g_value_set_int(value, params->qp_min_i);
+            break;
+        case RC_START_QP:
+            g_value_set_int(value, params->start_qp);
             break;
         case GOP_MODE:
             g_value_set_enum(value, params->gop_mode);
@@ -1644,6 +1652,16 @@ static void gst_es_venc_class_init(GstEsVencClass *klass) {
         RC_QP_MINI,
         g_param_spec_int(
             "qp-mini", "qp-mini", "Set qp_min_i in CBR or VBR", 0, 51, 24, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+    g_object_class_install_property(gobject_class,
+                                    RC_START_QP,
+                                    g_param_spec_int("start-qp",
+                                                     "start-qp",
+                                                     "Set start_qp in CBR or VBR",
+                                                     0,
+                                                     51,
+                                                     20,
+                                                     G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_class_install_property(gobject_class,
                                     GOP_MODE,

@@ -38,6 +38,7 @@ G_DEFINE_ABSTRACT_TYPE(GstEsDec, gst_es_dec, GST_TYPE_VIDEO_DECODER);
 #define IN_TIMEOUT_MS (2000)
 
 #define DISPLAY_BUFFER_CNT (4)
+#define DEFAULT_STRIDE_ALIGN 1
 
 #define MPP_TO_GST_PTS(pts) ((pts) * GST_MSECOND)
 
@@ -381,14 +382,13 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
             goto error3;
         }
         mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "output_fmt", mpp_fmt);
-        if (self->stride_align) {
-            GST_DEBUG_OBJECT(self, "set stride to %u", self->stride_align);
-            mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "stride_align", self->stride_align);
-        } else {
-            // If user not set stide align, save it get from mpp
-            mpp_dec_cfg_get_u32(self->mpp_dec_cfg, "stride_align", &self->stride_align);
-            GST_DEBUG_OBJECT(self, "self->stride_align is %u", self->stride_align);
+        if (!self->stride_align) {
+            //If user not set stride align,use default stride align,no longer get val from mpp
+            //because mpp's default stride_align may cause problems.
+            self->stride_align = DEFAULT_STRIDE_ALIGN;
         }
+        mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "stride_align", self->stride_align);
+        GST_DEBUG_OBJECT(self, "set stride to %u", self->stride_align);
         if (self->extra_hw_frames) {
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "extra_hw_frames", self->extra_hw_frames);
         }
