@@ -406,6 +406,8 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "crop_width", self->crop_w);
             mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "crop_height", self->crop_h);
         }
+        mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "input_width", state->info.width);
+        mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "input_height", state->info.height);
         if (esmpp_control(self->mpp_ctx, MPP_DEC_SET_CFG, self->mpp_dec_cfg) != MPP_OK) {
             GST_ERROR_OBJECT(self, "failed to set dec cfg");
             goto error3;
@@ -638,7 +640,10 @@ static void gst_es_dec_loop(GstVideoDecoder *decoder) {
         ES_U32 ver_stride = mpp_frame_get_ver_stride(mpp_frame);
         ES_U32 buf_size = mpp_frame_get_buf_size(mpp_frame);
         // Reserve additional buffers for display
-        ES_U32 group_buf_count = mpp_frame_get_group_buf_count(mpp_frame) + DISPLAY_BUFFER_CNT;
+        ES_U32 group_buf_count = mpp_frame_get_group_buf_count(mpp_frame);
+        if (strstr(decoder->element.object.name,"video") != NULL) {
+            group_buf_count += DISPLAY_BUFFER_CNT;
+        }
         if (self->extra_hw_frames) {
             group_buf_count += self->extra_hw_frames;
         }
