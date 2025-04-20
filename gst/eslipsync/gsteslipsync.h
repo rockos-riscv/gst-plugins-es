@@ -26,23 +26,23 @@
 * modified, adapted, translated, or created derivative work of, in whole or in part.
  */
 
-#ifndef __GST_ES_AVSYNC_H__
-#define __GST_ES_AVSYNC_H__
+#ifndef __GST_ES_LIPSYNC_H__
+#define __GST_ES_LIPSYNC_H__
 
 #include <gst/gst.h>
 #include <gst/audio/audio.h>
 
 G_BEGIN_DECLS
-#define GST_TYPE_ES_AVSYNC                    (gst_es_avsync_get_type())
-#define GST_ES_AVSYNC(obj)                    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_ES_AVSYNC,GstEsAvSync))
-#define GST_IS_ES_AVSYNC(obj)                 (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_ES_AVSYNC))
-#define GST_ES_AVSYNC_CLASS(klass)            (G_TYPE_CHECK_CLASS_CAST((klass) ,GST_TYPE_ES_AVSYNC,GstEsAvSyncClass))
-#define GST_IS_ES_AVSYNC_CLASS(klass)         (G_TYPE_CHECK_CLASS_TYPE((klass) ,GST_TYPE_ES_AVSYNC))
-#define GST_ES_AVSYNC_GET_CLASS(obj)          (G_TYPE_INSTANCE_GET_CLASS((obj) ,GST_TYPE_ES_AVSYNC,GstEsAvSyncClass))
-typedef struct _GstEsAvSync GstEsAvSync;
-typedef struct _GstEsAvSyncClass GstEsAvSyncClass;
+#define GST_TYPE_ES_LIPSYNC                    (gst_es_lipsync_get_type())
+#define GST_ES_LIPSYNC(obj)                    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_ES_LIPSYNC,GstEsLipSync))
+#define GST_IS_ES_LIPSYNC(obj)                 (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_ES_LIPSYNC))
+#define GST_ES_LIPSYNC_CLASS(klass)            (G_TYPE_CHECK_CLASS_CAST((klass) ,GST_TYPE_ES_LIPSYNC,GstEsLipSyncClass))
+#define GST_IS_ES_LIPSYNC_CLASS(klass)         (G_TYPE_CHECK_CLASS_TYPE((klass) ,GST_TYPE_ES_LIPSYNC))
+#define GST_ES_LIPSYNC_GET_CLASS(obj)          (G_TYPE_INSTANCE_GET_CLASS((obj) ,GST_TYPE_ES_LIPSYNC,GstEsLipSyncClass))
+typedef struct _GstEsLipSync GstEsLipSync;
+typedef struct _GstEsLipSyncClass GstEsLipSyncClass;
 
-struct _GstEsAvSync
+struct _GstEsLipSync
 {
   GstElement parent;
 
@@ -54,12 +54,12 @@ struct _GstEsAvSync
   gboolean video_eos_received;
 };
 
-struct _GstEsAvSyncClass
+struct _GstEsLipSyncClass
 {
   GstElementClass parent_class;
 };
 
-GType gst_es_avsync_get_type (void);
+GType gst_es_lipsync_get_type (void);
 
 G_END_DECLS
-#endif /* __GST_ES_AVSYNC_H__ */
+#endif /* __GST_ES_LIPSYNC_H__ */

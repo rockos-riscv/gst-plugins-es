@@ -1,3 +1,9 @@
+gst-plugins-es (1.6+0rockos1) unstable; urgency=medium
+
+  * Sync eswin 20250330 code with essdk v1.6
+
+ -- Han Gao <rabenda.cn@gmail.com>  Mon, 21 Apr 2025 00:36:09 +0800
+
 gst-plugins-es (1.5+0rockos1) unstable; urgency=medium
 
   * Sync eswin 20250228 code with essdk v1.5

@@ -31,8 +31,8 @@
  */
 
 /**
- * SECTION:element-esavsync
- * @title: esavsync
+ * SECTION:element-eslipsync
+ * @title: eslipsync
  *
  * This element acts like a synchronized audio/video "level". It gathers
  * all audio buffers sent between two video frames, and then sends a message
@@ -41,7 +41,7 @@
  * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location="test.mp4" ! decodebin name=d ! "audio/x-raw" ! queue ! audioconvert !
- * esavsync name=l ! queue ! autoaudiosink d. ! "video/x-raw" ! videoconvert ! queue ! l. l. ! queue ! autovideosink ]|
+ * eslipsync name=l ! queue ! autoaudiosink d. ! "video/x-raw" ! videoconvert ! queue ! l. l. ! queue ! autovideosink ]|
  *
  */
 
@@ -53,15 +53,15 @@
  * with newer GLib versions (>= 2.31.0) */
 #define GLIB_DISABLE_DEPRECATION_WARNINGS
 
-#include "gstesavsync.h"
+#include "gsteslipsync.h"
 #include <stdio.h>
 #include "lip_sync_api.h"
 
 #define DEBUG_DUMP_FILE 1
 #if DEBUG_DUMP_FILE
-#define DUMP_BEFORE_SYNC_FILE_NAME "/tmp/audio/esavsync_audio_before_sync.pcm"
-#define DUMP_AFTER_SYNC_FILE_NAME "/tmp/audio/esavsync_audio_after_sync.pcm"
-static void gst_es_avsync_dump_data(const char *path, guint8 *buf, gsize bytes)
+#define DUMP_BEFORE_SYNC_FILE_NAME "/tmp/audio/eslipsync_audio_before_sync.pcm"
+#define DUMP_AFTER_SYNC_FILE_NAME "/tmp/audio/eslipsync_audio_after_sync.pcm"
+static void gst_es_lipsync_dump_data(const char *path, guint8 *buf, gsize bytes)
 {
     if (!path) {
       return;
@@ -78,29 +78,29 @@ static void gst_es_avsync_dump_data(const char *path, guint8 *buf, gsize bytes)
 #define LIP_SYNC 1
 #ifdef LIP_SYNC
 typedef struct {
-    GstEsAvSync *obj;
+    GstEsLipSync *obj;
     GstBuffer *buffer;
 }Frame_Data;
 
 
 static guint g_chn = 0;
-static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data);
+static int32_t gst_es_lipsync_handle_cb(CALLBACK_TYPE type, void *data);
 
-static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data)
+static int32_t gst_es_lipsync_handle_cb(CALLBACK_TYPE type, void *data)
 {
-    ES_AVSync_AudioFrame *audio_frame = NULL;
-    ES_AVSync_VideoFrame *video_frame = NULL;
+    ES_LipSync_AudioFrame *audio_frame = NULL;
+    ES_LipSync_VideoFrame *video_frame = NULL;
     Frame_Data *frame_data = NULL;
 
     switch (type) {
     case ES_AUDIO_PLAYBACK:
-        audio_frame = (ES_AVSync_AudioFrame *)data;
+        audio_frame = (ES_LipSync_AudioFrame *)data;
         frame_data = audio_frame->frame_data;
         if (!frame_data->obj->audio_eos_received) {
             #if DEBUG_DUMP_FILE
                 GstMapInfo map;
                 gst_buffer_map (frame_data->buffer, &map, GST_MAP_READ);
-                gst_es_avsync_dump_data(DUMP_AFTER_SYNC_FILE_NAME,map.data, map.size);
+                gst_es_lipsync_dump_data(DUMP_AFTER_SYNC_FILE_NAME,map.data, map.size);
                 gst_buffer_unmap (frame_data->buffer, &map);
             #endif
                 GST_DEBUG_OBJECT (frame_data->obj, "%s ES_AUDIO_PLAYBACK\n", __func__);
@@ -109,7 +109,7 @@ static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data)
         break;
 
     case ES_VIDEO_DISPLAY:
-        video_frame = (ES_AVSync_VideoFrame *)data;
+        video_frame = (ES_LipSync_VideoFrame *)data;
         frame_data = video_frame->frame_data;
         if (!frame_data->obj->video_eos_received) {
             GST_DEBUG_OBJECT (frame_data->obj, "%s ES_VIDEO_DISPLAY\n", __func__);
@@ -118,7 +118,7 @@ static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data)
         break;
 
     case ES_AUDIO_RELEASE_BUFF:
-        audio_frame = (ES_AVSync_AudioFrame *)data;
+        audio_frame = (ES_LipSync_AudioFrame *)data;
         frame_data = audio_frame->frame_data;
         GST_DEBUG_OBJECT (frame_data->obj, "%s ES_AUDIO_RELEASE_BUFF\n", __func__);
         gst_buffer_unref(frame_data->buffer);
@@ -126,7 +126,7 @@ static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data)
         break;
 
     case ES_VIDEO_RELEASE_BUFF:
-        video_frame = (ES_AVSync_VideoFrame *)data;
+        video_frame = (ES_LipSync_VideoFrame *)data;
         frame_data = video_frame->frame_data;
         GST_DEBUG_OBJECT (frame_data->obj, "%s ES_VIDEO_RELEASE_BUFF\n", __func__);
         gst_buffer_unref(frame_data->buffer);
@@ -140,7 +140,7 @@ static int32_t gst_es_avsync_handle_cb(CALLBACK_TYPE type, void *data)
 }
 #endif
 
-#define GST_CAT_DEFAULT gst_es_avsync_debug
+#define GST_CAT_DEFAULT gst_es_lipsync_debug
 GST_DEBUG_CATEGORY_STATIC (GST_CAT_DEFAULT);
 
 static GstStaticPadTemplate audio_sink_template =
@@ -171,36 +171,36 @@ GST_STATIC_PAD_TEMPLATE ("vsrc",
     GST_STATIC_CAPS ("video/x-raw")
     );
 
-#define parent_class gst_es_avsync_parent_class
-G_DEFINE_TYPE (GstEsAvSync, gst_es_avsync,
+#define parent_class gst_es_lipsync_parent_class
+G_DEFINE_TYPE (GstEsLipSync, gst_es_lipsync,
     GST_TYPE_ELEMENT);
 
-static GstFlowReturn gst_es_avsync_asink_chain(GstPad * pad,
+static GstFlowReturn gst_es_lipsync_asink_chain(GstPad * pad,
     GstObject * parent, GstBuffer * inbuf);
-static GstFlowReturn gst_es_avsync_vsink_chain(GstPad * pad,
+static GstFlowReturn gst_es_lipsync_vsink_chain(GstPad * pad,
     GstObject * parent, GstBuffer * inbuf);
 
-static GstIterator *gst_es_avsync_iterate_internal_links (GstPad *
+static GstIterator *gst_es_lipsync_iterate_internal_links (GstPad *
     pad, GstObject * parent);
 
-static void gst_avsync_finalize (GObject * object);
+static void gst_lipsync_finalize (GObject * object);
 
-static void gst_es_avsync_class_init(GstEsAvSyncClass * klass)
+static void gst_es_lipsync_class_init(GstEsLipSyncClass * klass)
 {
     GstElementClass *gstelement_class;
     GObjectClass *gobject_class = (GObjectClass *) klass;
 
-    GST_DEBUG_CATEGORY_INIT (gst_es_avsync_debug,
-        "esavsync", 0, "Synchronized audio/video");
+    GST_DEBUG_CATEGORY_INIT (gst_es_lipsync_debug,
+        "eslipsync", 0, "Synchronized audio/video");
 
     gstelement_class = (GstElementClass *) klass;
 
     gst_element_class_set_static_metadata (gstelement_class,
-        "esavsync", "Filter/Audio",
-        "ES av sync",
+        "eslipsync", "Filter/Audio",
+        "ES lip sync",
         "http://eswin.com/");
 
-    gobject_class->finalize = gst_avsync_finalize;
+    gobject_class->finalize = gst_lipsync_finalize;
     gst_element_class_add_static_pad_template (gstelement_class,
         &audio_src_template);
     gst_element_class_add_static_pad_template (gstelement_class,
@@ -212,21 +212,21 @@ static void gst_es_avsync_class_init(GstEsAvSyncClass * klass)
         &video_sink_template);
 }
 
-static void gst_avsync_finalize(GObject * object)
+static void gst_lipsync_finalize(GObject * object)
 {
 #ifdef LIP_SYNC
-    GstEsAvSync *self = GST_ES_AVSYNC(object);
+    GstEsLipSync *self = GST_ES_LIPSYNC(object);
 
-    GST_DEBUG_OBJECT(self, "%s ES_AVSync_Stop\n", __func__);
-    ES_AVSync_Stop(self->chanId);
+    GST_DEBUG_OBJECT(self, "%s ES_LipSync_Stop\n", __func__);
+    ES_LipSync_Stop(self->chanId);
 #endif
 
     G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-static gboolean gst_es_avsync_audio_sink_event(GstPad * pad, GstObject * parent, GstEvent * event)
+static gboolean gst_es_lipsync_audio_sink_event(GstPad * pad, GstObject * parent, GstEvent * event)
 {
-    GstEsAvSync *self = GST_ES_AVSYNC (parent);
+    GstEsLipSync *self = GST_ES_LIPSYNC (parent);
 
     if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
         GST_DEBUG_OBJECT (self, "EOS received on pad %s", GST_PAD_NAME (pad));
@@ -237,9 +237,9 @@ static gboolean gst_es_avsync_audio_sink_event(GstPad * pad, GstObject * parent,
     return gst_pad_event_default (pad, parent, event);
 }
 
-static gboolean gst_es_avsync_video_sink_event(GstPad * pad, GstObject * parent, GstEvent * event)
+static gboolean gst_es_lipsync_video_sink_event(GstPad * pad, GstObject * parent, GstEvent * event)
 {
-    GstEsAvSync *self = GST_ES_AVSYNC (parent);
+    GstEsLipSync *self = GST_ES_LIPSYNC (parent);
 
     if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
         GST_DEBUG_OBJECT (self, "EOS received on pad %s", GST_PAD_NAME (pad));
@@ -250,34 +250,34 @@ static gboolean gst_es_avsync_video_sink_event(GstPad * pad, GstObject * parent,
     return gst_pad_event_default (pad, parent, event);
 }
 
-static void gst_es_avsync_init(GstEsAvSync * self)
+static void gst_es_lipsync_init(GstEsLipSync * self)
 {
     self->asinkpad =
         gst_pad_new_from_static_template (&audio_sink_template, "asink");
     gst_pad_set_chain_function (self->asinkpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_asink_chain));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_asink_chain));
     gst_pad_set_iterate_internal_links_function (self->asinkpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_iterate_internal_links));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_iterate_internal_links));
     gst_element_add_pad (GST_ELEMENT (self), self->asinkpad);
 
     self->vsinkpad =
         gst_pad_new_from_static_template (&video_sink_template, "vsink");
     gst_pad_set_chain_function (self->vsinkpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_vsink_chain));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_vsink_chain));
     gst_pad_set_iterate_internal_links_function (self->vsinkpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_iterate_internal_links));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_iterate_internal_links));
     gst_element_add_pad (GST_ELEMENT (self), self->vsinkpad);
 
     self->asrcpad =
         gst_pad_new_from_static_template (&audio_src_template, "asrc");
     gst_pad_set_iterate_internal_links_function (self->asrcpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_iterate_internal_links));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_iterate_internal_links));
     gst_element_add_pad (GST_ELEMENT (self), self->asrcpad);
 
     self->vsrcpad =
         gst_pad_new_from_static_template (&video_src_template, "vsrc");
     gst_pad_set_iterate_internal_links_function (self->vsrcpad,
-        GST_DEBUG_FUNCPTR (gst_es_avsync_iterate_internal_links));
+        GST_DEBUG_FUNCPTR (gst_es_lipsync_iterate_internal_links));
     gst_element_add_pad (GST_ELEMENT (self), self->vsrcpad);
 
     GST_PAD_SET_PROXY_CAPS (self->asinkpad);
@@ -292,28 +292,28 @@ static void gst_es_avsync_init(GstEsAvSync * self)
     GST_PAD_SET_PROXY_CAPS (self->vsrcpad);
     GST_PAD_SET_PROXY_SCHEDULING (self->vsrcpad);
 
-    gst_pad_set_event_function(self->asinkpad, GST_DEBUG_FUNCPTR(gst_es_avsync_audio_sink_event));
-    gst_pad_set_event_function(self->vsinkpad, GST_DEBUG_FUNCPTR(gst_es_avsync_video_sink_event));
+    gst_pad_set_event_function(self->asinkpad, GST_DEBUG_FUNCPTR(gst_es_lipsync_audio_sink_event));
+    gst_pad_set_event_function(self->vsinkpad, GST_DEBUG_FUNCPTR(gst_es_lipsync_video_sink_event));
 
 #ifdef LIP_SYNC
     self->chanId = g_chn++;
-    ES_AVSync_Info avsync_info = { .clock_type = AUDIO_CLOCK, .buffer_capacity = 16, .sample_rate = 48000, .channels = 2, .bitdepth = 32};
-    ES_AVSync_Init(self->chanId, &avsync_info);
-    ES_AVSync_Playback_Register(self->chanId, gst_es_avsync_handle_cb);
-    ES_AVSync_Start(self->chanId);
+    ES_LipSync_Info lipsync_info = { .clock_type = AUDIO_CLOCK, .buffer_capacity = 16, .sample_rate = 48000, .channels = 2, .bitdepth = 32};
+    ES_LipSync_Init(self->chanId, &lipsync_info);
+    ES_LipSync_Playback_Register(self->chanId, gst_es_lipsync_handle_cb);
+    ES_LipSync_Start(self->chanId);
 #endif
 
     self->audio_eos_received = FALSE;
     self->video_eos_received = FALSE;
 }
 
-static GstFlowReturn gst_es_avsync_vsink_chain(GstPad * pad, GstObject * parent,
+static GstFlowReturn gst_es_lipsync_vsink_chain(GstPad * pad, GstObject * parent,
     GstBuffer * buf)
 {
-    GstEsAvSync *self = GST_ES_AVSYNC (parent);
+    GstEsLipSync *self = GST_ES_LIPSYNC (parent);
 
 #ifdef LIP_SYNC
-    ES_AVSync_VideoFrame video_frame;
+    ES_LipSync_VideoFrame video_frame;
     video_frame.pts = GST_BUFFER_PTS(buf) / 1000;
     video_frame.end_flag = GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_LAST);
 
@@ -322,8 +322,8 @@ static GstFlowReturn gst_es_avsync_vsink_chain(GstPad * pad, GstObject * parent,
     data->buffer = gst_buffer_ref(buf);
     video_frame.frame_data = data;
 
-    GST_DEBUG_OBJECT (self, "%s ES_Push_VideoFrame: pts:%lu, end_flag:%d\n", __func__, video_frame.pts, video_frame.end_flag);
-    ES_Push_VideoFrame(self->chanId, &video_frame);
+    GST_DEBUG_OBJECT (self, "%s ES_LipSync_Push_VideoFrame: pts:%llu, end_flag:%d\n", __func__, video_frame.pts, video_frame.end_flag);
+    ES_LipSync_Push_VideoFrame(self->chanId, &video_frame);
 
     return GST_FLOW_OK;
 #else
@@ -331,20 +331,20 @@ static GstFlowReturn gst_es_avsync_vsink_chain(GstPad * pad, GstObject * parent,
 #endif
 }
 
-static GstFlowReturn gst_es_avsync_asink_chain(GstPad * pad, GstObject * parent,
+static GstFlowReturn gst_es_lipsync_asink_chain(GstPad * pad, GstObject * parent,
     GstBuffer * buf)
 {
-    GstEsAvSync *self = GST_ES_AVSYNC (parent);
+    GstEsLipSync *self = GST_ES_LIPSYNC (parent);
 
 #if DEBUG_DUMP_FILE
     GstMapInfo map;
     gst_buffer_map (buf, &map, GST_MAP_READ);
-    gst_es_avsync_dump_data(DUMP_BEFORE_SYNC_FILE_NAME,map.data, map.size);
+    gst_es_lipsync_dump_data(DUMP_BEFORE_SYNC_FILE_NAME,map.data, map.size);
     gst_buffer_unmap (buf, &map);
 #endif
 
 #ifdef LIP_SYNC
-    ES_AVSync_AudioFrame audio_frame;
+    ES_LipSync_AudioFrame audio_frame;
 
     audio_frame.pts = GST_BUFFER_PTS(buf) / 1000;
     audio_frame.size = gst_buffer_get_size(buf);
@@ -355,22 +355,22 @@ static GstFlowReturn gst_es_avsync_asink_chain(GstPad * pad, GstObject * parent,
     data->buffer = gst_buffer_ref(buf);
     audio_frame.frame_data = data;
 
-    GST_DEBUG_OBJECT (self, "%s ES_Push_AudioFrame: pts:%lu, size:%d, end_flag:%d\n", __func__,
+    GST_DEBUG_OBJECT (self, "%s ES_LipSync_Push_AudioFrame: pts:%llu, size:%d, end_flag:%d\n", __func__,
                       audio_frame.pts, audio_frame.size, audio_frame.end_flag);
-    ES_Push_AudioFrame(self->chanId, &audio_frame);
+    ES_LipSync_Push_AudioFrame(self->chanId, &audio_frame);
     return GST_FLOW_OK;
 #else
     return gst_pad_push (self->asrcpad, buf);
 #endif
 }
 
-static GstIterator * gst_es_avsync_iterate_internal_links (GstPad * pad,
+static GstIterator * gst_es_lipsync_iterate_internal_links (GstPad * pad,
     GstObject * parent)
 {
     GstIterator *it = NULL;
     GstPad *opad;
     GValue val = { 0, };
-    GstEsAvSync *self = GST_ES_AVSYNC (parent);
+    GstEsLipSync *self = GST_ES_LIPSYNC (parent);
 
     if (self->asinkpad == pad) {
         opad = gst_object_ref (self->asrcpad);
@@ -395,10 +395,10 @@ static GstIterator * gst_es_avsync_iterate_internal_links (GstPad * pad,
     return it;
 }
 
-static gboolean gst_es_avsync_plugin_init (GstPlugin * plugin)
+static gboolean gst_es_lipsync_plugin_init (GstPlugin * plugin)
 {
-    return gst_element_register (plugin, "esavsync",
-        GST_RANK_NONE, GST_TYPE_ES_AVSYNC);
+    return gst_element_register (plugin, "eslipsync",
+        GST_RANK_NONE, GST_TYPE_ES_LIPSYNC);
 }
 
 #ifndef VERSION
@@ -406,11 +406,11 @@ static gboolean gst_es_avsync_plugin_init (GstPlugin * plugin)
 #endif
 
 #ifndef PACKAGE
-#define PACKAGE "esavsync"
+#define PACKAGE "eslipsync"
 #endif
 
 #ifndef PACKAGE_NAME
-#define PACKAGE_NAME "esavsync"
+#define PACKAGE_NAME "eslipsync"
 #endif
 
 #ifndef GST_PACKAGE_ORIGIN
@@ -419,7 +419,7 @@ static gboolean gst_es_avsync_plugin_init (GstPlugin * plugin)
 
 GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
-    esavsync,
-    "Es av sync",
-    gst_es_avsync_plugin_init, VERSION, "LGPL",
+    eslipsync,
+    "Es lip sync",
+    gst_es_lipsync_plugin_init, VERSION, "LGPL",
     PACKAGE_NAME, GST_PACKAGE_ORIGIN);
