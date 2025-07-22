@@ -40,7 +40,7 @@ G_DEFINE_ABSTRACT_TYPE(GstEsDec, gst_es_dec, GST_TYPE_VIDEO_DECODER);
 #define DISPLAY_BUFFER_CNT (4)
 #define DEFAULT_STRIDE_ALIGN 1
 
-#define MPP_TO_GST_PTS(pts) ((pts) * GST_MSECOND)
+#define MPP_TO_GST_PTS(pts) ((pts)*GST_MSECOND)
 
 #define TASK_IS_STARTED(decoder) (gst_pad_get_task_state((decoder)->srcpad) == GST_TASK_STARTED)
 
@@ -354,8 +354,12 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
             GST_ERROR_OBJECT(self, "unsupported coding type %d.", self->mpp_coding_type);
             return FALSE;
         }
-        if (esmpp_create(&self->mpp_ctx, MPP_CTX_DEC, self->mpp_coding_type, 0) != MPP_OK) {
+        if (esmpp_create(&self->mpp_ctx, MPP_CTX_DEC, self->mpp_coding_type) != MPP_OK) {
             GST_ERROR_OBJECT(self, "failed to create mpp context.");
+            return FALSE;
+        }
+        if (MPP_OK != esmpp_select_dev(self->mpp_ctx, 0, 0)) {
+            GST_ERROR_OBJECT(self, "Failed to select MPP dev.");
             return FALSE;
         }
         if (esmpp_init(self->mpp_ctx) != MPP_OK) {
@@ -383,8 +387,8 @@ static gboolean gst_es_dec_set_format(GstVideoDecoder *decoder, GstVideoCodecSta
         }
         mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "output_fmt", mpp_fmt);
         if (!self->stride_align) {
-            //If user not set stride align,use default stride align,no longer get val from mpp
-            //because mpp's default stride_align may cause problems.
+            // If user not set stride align,use default stride align,no longer get val from mpp
+            // because mpp's default stride_align may cause problems.
             self->stride_align = DEFAULT_STRIDE_ALIGN;
         }
         mpp_dec_cfg_set_s32(self->mpp_dec_cfg, "stride_align", self->stride_align);
@@ -641,7 +645,7 @@ static void gst_es_dec_loop(GstVideoDecoder *decoder) {
         ES_U32 buf_size = mpp_frame_get_buf_size(mpp_frame);
         // Reserve additional buffers for display
         ES_U32 group_buf_count = mpp_frame_get_group_buf_count(mpp_frame);
-        if (strstr(decoder->element.object.name,"video") != NULL) {
+        if (strstr(decoder->element.object.name, "video") != NULL) {
             group_buf_count += DISPLAY_BUFFER_CNT;
         }
         if (self->extra_hw_frames) {

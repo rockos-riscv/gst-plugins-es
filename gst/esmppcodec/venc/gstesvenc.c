@@ -103,7 +103,7 @@ enum {
 gboolean gst_es_venc_supported(MppCodingType coding) {
     MppCtxPtr ctx = NULL;
 
-    if (esmpp_create(&ctx, MPP_CTX_ENC, coding, 0)) {
+    if (esmpp_create(&ctx, MPP_CTX_ENC, coding)) {
         return FALSE;
     }
 
@@ -121,9 +121,14 @@ static gboolean gst_es_venc_start(GstVideoEncoder *encoder) {
         return FALSE;
     }
 
-    if (MPP_OK != esmpp_create(&self->ctx, MPP_CTX_ENC, self->mpp_type, 0)) {
+    if (MPP_OK != esmpp_create(&self->ctx, MPP_CTX_ENC, self->mpp_type)) {
         GST_ERROR_OBJECT(self, "create esmpp failed, type=%d", self->mpp_type);
         goto err_unref_alloc;
+    }
+
+    if (MPP_OK != esmpp_select_dev(self->ctx, 0, 0)) {
+        GST_ERROR_OBJECT(self, "Failed to select MPP dev.");
+        return FALSE;
     }
 
     if (MPP_OK != esmpp_init(self->ctx)) {
